@@ -16,7 +16,7 @@ class ReleaseFileTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["flags"], [])
         self.assertEqual(plugin["name"], "GD Item Assistant")
-        self.assertEqual(package["version"], "0.1.2")
+        self.assertEqual(package["version"], "0.2.0")
 
     def test_shell_scripts_parse(self) -> None:
         scripts = [
@@ -30,7 +30,7 @@ class ReleaseFileTests(unittest.TestCase):
     def test_desktop_launcher_is_pinned_and_not_marked_executable(self) -> None:
         launcher = ROOT / "Install-GDIA-Decky.desktop"
         content = launcher.read_text(encoding="utf-8")
-        self.assertIn("/v0.1.2/scripts/install.sh", content)
+        self.assertIn("/v0.2.0/scripts/install.sh", content)
         self.assertFalse(launcher.stat().st_mode & 0o111)
 
     def test_bridge_build_preserves_upstream_dependency_versions(self) -> None:
@@ -66,8 +66,23 @@ class ReleaseFileTests(unittest.TestCase):
         self.assertIn(root + "main.py", names)
         self.assertIn(root + "dist/index.js", names)
         self.assertIn(root + "backend/inventory.py", names)
+        self.assertIn(root + "backend/characters.py", names)
+        self.assertIn(root + "backend/stats.py", names)
         self.assertFalse(any("tests/" in name for name in names))
         self.assertFalse(any(name.endswith("DeckyBridgeController.cs") for name in names))
+
+    def test_search_input_value_is_captured_before_state_update(self) -> None:
+        source = (ROOT / "src/index.tsx").read_text(encoding="utf-8")
+        capture = source.index("const query = event.currentTarget?.value")
+        update = source.index("setFilters((current)", capture)
+        self.assertLess(capture, update)
+        self.assertNotIn("query: event.currentTarget.value", source)
+
+    def test_item_details_use_a_gamepad_cancel_aware_modal(self) -> None:
+        source = (ROOT / "src/index.tsx").read_text(encoding="utf-8")
+        self.assertIn("showModal(", source)
+        self.assertIn("<ConfirmModal", source)
+        self.assertIn('strCancelButtonText="Back"', source)
 
 
 if __name__ == "__main__":

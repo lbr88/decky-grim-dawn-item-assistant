@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from backend.inventory import InventoryRepository
@@ -50,7 +51,7 @@ class InventoryRepositoryTests(unittest.TestCase):
         result = self.repository.search({"query": "%' OR 1=1 --"})
         self.assertEqual(result.total, 0)
         self.assertEqual(result.items, [])
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection:
             count = connection.execute("SELECT count(*) FROM PlayerItem").fetchone()[0]
         self.assertEqual(count, 5)
 
@@ -75,6 +76,24 @@ class InventoryRepositoryTests(unittest.TestCase):
         self.assertIsNone(self.repository.get_item(-1))
         self.assertIsNone(self.repository.get_item(4))
         self.assertEqual(self.repository.get_item(1).name, "Aetherfire")
+
+    def test_search_includes_three_high_value_stat_summaries(self) -> None:
+        item = self.repository.search({"query": "Aetherfire"}).items[0]
+        self.assertEqual(item.slot, "Chest Armor")
+        self.assertEqual(
+            [stat.display_value for stat in item.highlights],
+            ["812 Armor", "+74 Offensive Ability", "+28% Aether Resistance"],
+        )
+        self.assertNotIn("__computed__", [stat.key for stat in item.highlights])
+
+    def test_details_include_all_formatted_stats_and_storage_time(self) -> None:
+        details = self.repository.get_details(1)
+        self.assertIsNotNone(details)
+        assert details is not None
+        self.assertEqual(details.item.slot, "Chest Armor")
+        self.assertEqual(len(details.stats), 4)
+        self.assertEqual(details.item.stored_at, "2026-01-01T00:00:00Z")
+        self.assertEqual(details.stats[-1].display_value, "+102% Aether Damage")
 
 
 if __name__ == "__main__":

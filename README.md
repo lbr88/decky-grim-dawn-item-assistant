@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.1.2 is a public alpha. The complete transfer path is built and tested
+Version 0.2.0 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
@@ -16,7 +16,11 @@ The plugin provides:
 - rarity, softcore/hardcore and level filters
 - name, level and recently-stored sorting
 - paged, controller-focusable results
-- explicit item selection followed by a separate transfer action
+- compact high-value stat summaries directly in each result row
+- a gamepad-aware details modal with categorized computed stats
+- local character-level and softcore/hardcore eligibility guidance
+- a one-button filter for items the selected character can use
+- direct transfer from the item details modal
 - status checks for Item Assistant, Grim Dawn and the bridge
 
 ## Required companion setup
@@ -57,9 +61,10 @@ runs.
 1. In Gaming Mode, launch Grim Dawn using the combined launcher. Item Assistant
    starts first, then Grim Dawn starts in front.
 2. Open Quick Access, choose **GD Item Assistant**, and search or filter storage.
-3. Choose an item row to select it.
-4. Choose **Send selected item to game**.
-5. Open the transfer stash in Grim Dawn to collect the item.
+3. Optionally choose a local character for level/mode guidance.
+4. Choose an item row to see its complete computed stat breakdown.
+5. Choose **Send to game**, or press **B** to return to the same results.
+6. Open the transfer stash in Grim Dawn to collect the item.
 
 Transfers remain disabled unless Item Assistant, Grim Dawn and bridge version 1
 are all detected. A timed-out request is reported as uncertain; refresh the
@@ -70,6 +75,10 @@ list before trying the same item again.
 The Decky backend opens Item Assistant's `userdata.db` through SQLite
 `mode=ro` with `query_only` enabled. Searches are parameterized, result and
 input sizes are bounded, and sort expressions come from a fixed allowlist.
+Computed stats and equipment-slot metadata are read in bounded batches for the
+visible result page. The character selector decrypts only the local
+`player.gdc` header to read name, level and mode; it does not write character
+saves or attempt to assign a subjective universal upgrade score.
 
 Item Assistant does not expose a transfer API. The Wine-only bridge polls a
 private directory under Item Assistant's existing data folder for a narrowly
@@ -83,6 +92,7 @@ plugin never writes the database or stash and never reads a cloud token.
 - no root Decky backend
 - no network listener or localhost server
 - no arbitrary command, path or SQL supplied by the frontend
+- character saves are read locally with file-size, count and string bounds
 - exact process-name and bridge-version validation
 - UUID request names, 0600 request files, 0700 bridge directories and atomic
   writes

@@ -73,7 +73,7 @@ jobs:
           Copy-Item "upstream/iagd/LICENSE" "$output/LICENSE-Item-Assistant"
           [ordered]@{
             bridgeVersion = 1
-            pluginVersion = "0.1.2"
+            pluginVersion = "0.2.0"
             itemAssistantVersion = "1.5.9700.13021"
             sourceCommit = "b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb"
             originalDllSha256 = "f949ef06c1eabd3521062a02be01d2f639aea19334479c7820643b45197c0d6e"

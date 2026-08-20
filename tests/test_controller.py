@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from backend.controller import GdiaController
-from backend.models import InventoryItem, OperationResult
+from backend.models import InventoryItem, ItemDetails, ItemStat, OperationResult
 
 from .helpers import make_paths
 
@@ -23,6 +23,14 @@ class FakeInventory:
     def get_item(self, player_item_id: int) -> InventoryItem | None:
         if self.item and self.item.player_item_id == player_item_id:
             return self.item
+        return None
+
+    def get_details(self, player_item_id: int) -> ItemDetails | None:
+        if self.item and self.item.player_item_id == player_item_id:
+            return ItemDetails(
+                self.item,
+                (ItemStat("characterLife", "Health", 100, "+100 Health", "Defense"),),
+            )
         return None
 
 
@@ -85,6 +93,20 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(bridge.transferred, [])
         self.assertTrue(controller.transfer(7).ok)
         self.assertEqual(bridge.transferred, [7])
+
+    def test_details_returns_enriched_item_without_using_bridge(self) -> None:
+        bridge = FakeBridge()
+        controller = GdiaController(
+            paths=self.paths,
+            inventory=FakeInventory(self.item),
+            bridge=bridge,
+            process_checker=lambda name: False,
+        )
+        details = controller.details(7)
+        self.assertIsNotNone(details)
+        assert details is not None
+        self.assertEqual(details.stats[0].display_value, "+100 Health")
+        self.assertEqual(bridge.transferred, [])
 
 
 if __name__ == "__main__":
