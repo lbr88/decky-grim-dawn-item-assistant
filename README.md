@@ -6,8 +6,8 @@ windows.
 
 ## Current status
 
-Version 0.1.0 is the first public alpha. The complete transfer path is built and
-tested against Item Assistant `1.5.9700.13021`, source commit
+Version 0.1.1 is a public alpha. The complete transfer path is built and tested
+against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
 The plugin provides:
@@ -37,9 +37,11 @@ Desktop and run it. It downloads, verifies and installs both required pieces:
 2. the matching Item Assistant bridge assembly.
 
 The installer is idempotent: it skips pieces already at the requested version.
-It recognizes only the verified original or already-patched Item Assistant DLL,
-backs up the original before replacement, and refuses unknown builds. Item
-Assistant and Grim Dawn must be closed while it runs.
+It recognizes only the verified original or a bridge recorded by a valid local
+manifest, backs up the original before replacement, and refuses unknown builds.
+Plugin files are staged outside Decky's watched plugin directory before an
+atomic move into place. Item Assistant and Grim Dawn must be closed while it
+runs.
 
 ## Use
 

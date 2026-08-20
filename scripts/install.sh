@@ -128,10 +128,53 @@ downloaded_dll_hash="$(sha256sum "${staged_dll}" | awk '{ print $1 }')"
 
 current_hash="$(sha256sum "${iagd_dir}/IAGrim.dll" | awk '{ print $1 }')"
 bridge_changed=false
+
+install_bridge_files() {
+    install -m 0644 "${staged_dll}" "${iagd_dir}/.IAGrim.dll.decky-new"
+    mv -f -- "${iagd_dir}/.IAGrim.dll.decky-new" "${iagd_dir}/IAGrim.dll"
+    install -m 0644 "${bridge_manifest}" "${iagd_dir}/decky-bridge-manifest.json"
+    bridge_changed=true
+}
+
+backup="${iagd_dir}/IAGrim.dll.pre-decky"
+installed_bridge_manifest="${iagd_dir}/decky-bridge-manifest.json"
+previous_bridge_verified=false
+if [[ "${current_hash}" != "${original_hash}" && \
+      "${current_hash}" != "${patched_hash}" && \
+      -f "${backup}" && -f "${installed_bridge_manifest}" ]]; then
+    previous_bridge_hashes=()
+    readarray -t previous_bridge_hashes < <(
+        python3 - "${installed_bridge_manifest}" <<'PY' 2>/dev/null || true
+import json
+import re
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    manifest = json.load(handle)
+if manifest.get("bridgeVersion") != 1 or manifest.get("itemAssistantVersion") != "1.5.9700.13021":
+    raise SystemExit(1)
+for key in ("originalDllSha256", "patchedDllSha256"):
+    value = manifest.get(key, "")
+    if not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise SystemExit(1)
+    print(value)
+PY
+    )
+    if [[ "${#previous_bridge_hashes[@]}" -eq 2 ]]; then
+        previous_original_hash="${previous_bridge_hashes[0]}"
+        previous_patched_hash="${previous_bridge_hashes[1]}"
+        backup_hash="$(sha256sum "${backup}" | awk '{ print $1 }')"
+        if [[ "${previous_original_hash}" == "${original_hash}" && \
+              "${previous_patched_hash}" == "${current_hash}" && \
+              "${backup_hash}" == "${original_hash}" ]]; then
+            previous_bridge_verified=true
+        fi
+    fi
+fi
+
 if [[ "${current_hash}" == "${patched_hash}" ]]; then
     echo "Item Assistant bridge is already installed; skipping."
 elif [[ "${current_hash}" == "${original_hash}" ]]; then
-    backup="${iagd_dir}/IAGrim.dll.pre-decky"
     if [[ -f "${backup}" ]]; then
         backup_hash="$(sha256sum "${backup}" | awk '{ print $1 }')"
         [[ "${backup_hash}" == "${original_hash}" ]] \
@@ -139,11 +182,11 @@ elif [[ "${current_hash}" == "${original_hash}" ]]; then
     else
         install -m 0644 "${iagd_dir}/IAGrim.dll" "${backup}"
     fi
-    install -m 0644 "${staged_dll}" "${iagd_dir}/.IAGrim.dll.decky-new"
-    mv -f -- "${iagd_dir}/.IAGrim.dll.decky-new" "${iagd_dir}/IAGrim.dll"
-    install -m 0644 "${bridge_manifest}" "${iagd_dir}/decky-bridge-manifest.json"
-    bridge_changed=true
+    install_bridge_files
     echo "Installed Item Assistant bridge; original saved as ${backup}"
+elif [[ "${previous_bridge_verified}" == true ]]; then
+    echo "Upgrading verified Item Assistant bridge."
+    install_bridge_files
 else
     fail "Installed IAGrim.dll is not the verified original or this bridge build; no files were changed."
 fi
@@ -168,9 +211,10 @@ else
     if [[ -z "${GDIA_TEST_MODE:-}" ]]; then
         sudo -v
     fi
-    incoming="${plugin_parent}/.${plugin_name}.installing.$$"
+    staging_parent="${plugin_parent%/*}/.gdia-installer"
+    incoming="${staging_parent}/${plugin_name}.installing.$$"
     backup_parent="${plugin_parent}/.backups"
-    run_privileged install -d -m 0755 "${incoming}" "${backup_parent}"
+    run_privileged install -d -m 0755 "${staging_parent}" "${incoming}" "${backup_parent}"
     run_privileged cp -a "${staged_plugin}/." "${incoming}/"
     if [[ -z "${GDIA_TEST_MODE:-}" ]]; then
         sudo chown -R root:root "${incoming}"

@@ -134,6 +134,32 @@ class InstallerTests(unittest.TestCase):
             (self.plugin_parent / "decky-grim-dawn-item-assistant").exists()
         )
 
+    def test_verified_previous_bridge_can_be_upgraded(self) -> None:
+        previous = b"previous verified Item Assistant bridge"
+        (self.iagd / "IAGrim.dll").write_bytes(previous)
+        (self.iagd / "IAGrim.dll.pre-decky").write_bytes(self.original)
+        (self.iagd / "decky-bridge-manifest.json").write_text(
+            json.dumps(
+                {
+                    "bridgeVersion": 1,
+                    "pluginVersion": "0.1.0",
+                    "itemAssistantVersion": "1.5.9700.13021",
+                    "originalDllSha256": hashlib.sha256(self.original).hexdigest(),
+                    "patchedDllSha256": hashlib.sha256(previous).hexdigest(),
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        result = self._run_installer()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Upgrading verified Item Assistant bridge", result.stdout)
+        self.assertEqual((self.iagd / "IAGrim.dll").read_bytes(), self.patched)
+        self.assertEqual(
+            (self.iagd / "IAGrim.dll.pre-decky").read_bytes(), self.original
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

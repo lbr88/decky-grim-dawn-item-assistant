@@ -49,7 +49,7 @@ jobs:
           -p:Version=1.5.9700.13021
           -p:AssemblyVersion=1.5.9700.13021
           -p:FileVersion=1.5.9700.13021
-          -p:InformationalVersion=1.5.9700.13021+decky.0.1.0
+          -p:InformationalVersion=1.5.9700.13021+decky.0.1.1
           --nologo
       - name: Verify bridge output
         shell: pwsh

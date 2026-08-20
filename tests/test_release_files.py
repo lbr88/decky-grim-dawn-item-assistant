@@ -16,7 +16,7 @@ class ReleaseFileTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["flags"], [])
         self.assertEqual(plugin["name"], "GD Item Assistant")
-        self.assertEqual(package["version"], "0.1.0")
+        self.assertEqual(package["version"], "0.1.1")
 
     def test_shell_scripts_parse(self) -> None:
         scripts = [
@@ -30,8 +30,13 @@ class ReleaseFileTests(unittest.TestCase):
     def test_desktop_launcher_is_pinned_and_not_marked_executable(self) -> None:
         launcher = ROOT / "Install-GDIA-Decky.desktop"
         content = launcher.read_text(encoding="utf-8")
-        self.assertIn("/v0.1.0/scripts/install.sh", content)
+        self.assertIn("/v0.1.1/scripts/install.sh", content)
         self.assertFalse(launcher.stat().st_mode & 0o111)
+
+    def test_installer_stages_outside_deckys_watched_plugin_directory(self) -> None:
+        content = (ROOT / "scripts/install.sh").read_text(encoding="utf-8")
+        self.assertIn('staging_parent="${plugin_parent%/*}/.gdia-installer"', content)
+        self.assertNotIn('incoming="${plugin_parent}/.', content)
 
     def test_release_zip_contains_only_expected_runtime_tree(self) -> None:
         archive = ROOT / "dist-release/decky-grim-dawn-item-assistant.zip"
