@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Callable
 
 from .bridge import BridgeClient
+from .characters import CharacterRepository
 from .inventory import InventoryError, InventoryRepository
-from .models import OperationResult, PluginStatus, SearchResult
+from .models import CharacterSummary, ItemDetails, OperationResult, PluginStatus, SearchResult
 from .paths import GdiaPaths
 from .processes import any_process_named
 
@@ -15,11 +16,13 @@ class GdiaController:
         paths: GdiaPaths | None = None,
         inventory: InventoryRepository | None = None,
         bridge: BridgeClient | None = None,
+        characters: CharacterRepository | None = None,
         process_checker: Callable[[str], bool] | None = None,
     ):
         self.paths = paths or GdiaPaths.discover()
         self.inventory = inventory or InventoryRepository(self.paths.database)
         self.bridge = bridge or BridgeClient(self.paths)
+        self.characters = characters or CharacterRepository(self.paths.steam_root)
         self._process_checker = process_checker or any_process_named
 
     def status(self) -> PluginStatus:
@@ -56,6 +59,12 @@ class GdiaController:
 
     def search(self, filters: dict | None) -> SearchResult:
         return self.inventory.search(filters)
+
+    def details(self, player_item_id: int) -> ItemDetails | None:
+        return self.inventory.get_details(player_item_id)
+
+    def list_characters(self) -> tuple[CharacterSummary, ...]:
+        return self.characters.list()
 
     def transfer(self, player_item_id: int) -> OperationResult:
         item = self.inventory.get_item(player_item_id)

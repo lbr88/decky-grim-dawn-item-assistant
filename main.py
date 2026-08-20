@@ -81,3 +81,21 @@ class Plugin:
                 "message": "Unexpected Item Assistant bridge error",
                 "uncertain": False,
             }
+
+    async def get_item_details(self, player_item_id):
+        try:
+            details = await asyncio.to_thread(
+                self._controller.details, player_item_id
+            )
+            return details.to_dict() if details is not None else None
+        except Exception:
+            decky.logger.exception("Item details request failed")
+            return None
+
+    async def list_characters(self):
+        try:
+            characters = await asyncio.to_thread(self._controller.list_characters)
+            return [character.to_dict() for character in characters]
+        except Exception:
+            decky.logger.exception("Character list request failed")
+            return []

@@ -30,7 +30,7 @@ install -m 0644 "${repo_root}/THIRD_PARTY_NOTICES.md" \
     "${plugin_root}/THIRD_PARTY_NOTICES.md"
 install -m 0644 "${repo_root}/assets/logo.svg" "${plugin_root}/assets/logo.svg"
 
-for module in __init__ bridge controller inventory models paths processes; do
+for module in __init__ bridge characters controller inventory models paths processes stats; do
     install -m 0644 "${repo_root}/backend/${module}.py" \
         "${plugin_root}/backend/${module}.py"
 done
