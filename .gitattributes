@@ -1,0 +1,8 @@
+* text=auto
+*.patch text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.cs text eol=lf
+*.tsx text eol=lf
+*.yml text eol=lf
+*.desktop text eol=lf
