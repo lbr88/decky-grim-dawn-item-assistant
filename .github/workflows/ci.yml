@@ -46,15 +46,7 @@ jobs:
         run: >-
           dotnet build upstream/iagd/IAGrim-core.sln
           -c Release
-          -p:Version=1.5.9700.13021
-          -p:AssemblyVersion=1.5.9700.13021
-          -p:FileVersion=1.5.9700.13021
-          -p:InformationalVersion=1.5.9700.13021+decky.0.1.1
           --nologo
       - name: Verify bridge output
         shell: pwsh
-        run: |
-          $dll = "upstream/iagd/IAGrim/bin/Release/net10.0-windows/IAGrim.dll"
-          if (-not (Test-Path $dll)) { throw "Missing patched IAGrim.dll" }
-          $text = [Text.Encoding]::Unicode.GetString([IO.File]::ReadAllBytes($dll))
-          if (-not $text.Contains("Decky item transfer bridge started")) { throw "Bridge marker missing" }
+        run: scripts/verify-bridge-build.ps1 upstream/iagd

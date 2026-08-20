@@ -16,7 +16,7 @@ class ReleaseFileTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["flags"], [])
         self.assertEqual(plugin["name"], "GD Item Assistant")
-        self.assertEqual(package["version"], "0.1.1")
+        self.assertEqual(package["version"], "0.1.2")
 
     def test_shell_scripts_parse(self) -> None:
         scripts = [
@@ -30,8 +30,25 @@ class ReleaseFileTests(unittest.TestCase):
     def test_desktop_launcher_is_pinned_and_not_marked_executable(self) -> None:
         launcher = ROOT / "Install-GDIA-Decky.desktop"
         content = launcher.read_text(encoding="utf-8")
-        self.assertIn("/v0.1.1/scripts/install.sh", content)
+        self.assertIn("/v0.1.2/scripts/install.sh", content)
         self.assertFalse(launcher.stat().st_mode & 0o111)
+
+    def test_bridge_build_preserves_upstream_dependency_versions(self) -> None:
+        workflows = [
+            (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"),
+            (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"),
+        ]
+        for workflow in workflows:
+            self.assertNotIn("-p:Version=", workflow)
+            self.assertNotIn("-p:AssemblyVersion=", workflow)
+            self.assertNotIn("-p:FileVersion=", workflow)
+            self.assertNotIn("-p:InformationalVersion=", workflow)
+            self.assertIn("scripts/verify-bridge-build.ps1", workflow)
+
+        verifier = (ROOT / "scripts/verify-bridge-build.ps1").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"EvilsoftCommons" = "1.0.0.0"', verifier)
 
     def test_installer_stages_outside_deckys_watched_plugin_directory(self) -> None:
         content = (ROOT / "scripts/install.sh").read_text(encoding="utf-8")

@@ -1,6 +1,6 @@
 {
   "name": "decky-grim-dawn-item-assistant",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Search and transfer Grim Dawn Item Assistant items from Decky Loader.",
   "type": "module",
   "scripts": {

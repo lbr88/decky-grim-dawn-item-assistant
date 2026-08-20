@@ -57,11 +57,10 @@ jobs:
         run: >-
           dotnet build upstream/iagd/IAGrim-core.sln
           -c Release
-          -p:Version=1.5.9700.13021
-          -p:AssemblyVersion=1.5.9700.13021
-          -p:FileVersion=1.5.9700.13021
-          -p:InformationalVersion=1.5.9700.13021+decky.0.1.1
           --nologo
+      - name: Verify bridge output
+        shell: pwsh
+        run: scripts/verify-bridge-build.ps1 upstream/iagd
       - name: Package bridge
         shell: pwsh
         run: |
@@ -74,7 +73,7 @@ jobs:
           Copy-Item "upstream/iagd/LICENSE" "$output/LICENSE-Item-Assistant"
           [ordered]@{
             bridgeVersion = 1
-            pluginVersion = "0.1.1"
+            pluginVersion = "0.1.2"
             itemAssistantVersion = "1.5.9700.13021"
             sourceCommit = "b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb"
             originalDllSha256 = "f949ef06c1eabd3521062a02be01d2f639aea19334479c7820643b45197c0d6e"

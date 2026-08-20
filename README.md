@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.1.1 is a public alpha. The complete transfer path is built and tested
+Version 0.1.2 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
