@@ -1,0 +1,54 @@
+{
+  "name": "decky-grim-dawn-item-assistant",
+  "version": "0.1.0",
+  "description": "Search and transfer Grim Dawn Item Assistant items from Decky Loader.",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "typecheck": "tsc --noEmit",
+    "test": "python3 -m unittest discover -v",
+    "package": "bash scripts/package-release.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lbr88/decky-grim-dawn-item-assistant.git"
+  },
+  "keywords": [
+    "decky",
+    "steam-deck",
+    "grim-dawn",
+    "item-assistant",
+    "inventory"
+  ],
+  "author": "LBR88",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lbr88/decky-grim-dawn-item-assistant/issues"
+  },
+  "homepage": "https://github.com/lbr88/decky-grim-dawn-item-assistant#readme",
+  "devDependencies": {
+    "@decky/rollup": "^1.0.2",
+    "@decky/ui": "^4.11.0",
+    "@rollup/rollup-linux-x64-musl": "^4.53.3",
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "@types/react-router": "5.1.20",
+    "rollup": "^4.53.3",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@decky/api": "^1.1.3",
+    "react-icons": "^5.3.0",
+    "tslib": "^2.7.0"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ]
+    }
+  },
+  "packageManager": "pnpm@9.15.9"
+}

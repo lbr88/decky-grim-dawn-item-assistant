@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Grim Dawn Item Assistant Decky plugin</title>
+  <desc id="description">A gold item chest with a green transfer arrow.</desc>
+  <defs>
+    <linearGradient id="chest" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9a441"/>
+      <stop offset="1" stop-color="#7b451d"/>
+    </linearGradient>
+  </defs>
+  <rect x="54" y="164" width="404" height="270" rx="42" fill="#171b20" stroke="#d9a441" stroke-width="24"/>
+  <path d="M92 184c0-70 57-126 127-126h74c70 0 127 56 127 126" fill="none" stroke="url(#chest)" stroke-width="36"/>
+  <path d="M66 246h380" stroke="#d9a441" stroke-width="24"/>
+  <rect x="218" y="214" width="76" height="104" rx="18" fill="#e9c46a"/>
+  <path d="M166 362h140m0 0-44-44m44 44-44 44" fill="none" stroke="#55d17a" stroke-linecap="round" stroke-linejoin="round" stroke-width="28"/>
+</svg>

@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      - run: python3 -m unittest discover -v
+      - run: bash scripts/package-release.sh
+      - run: python3 -m zipfile -l dist-release/decky-grim-dawn-item-assistant.zip
+
+  item-assistant-bridge:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: marius00/iagd
+          ref: b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb
+          path: upstream/iagd
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Apply pinned bridge patch
+        shell: bash
+        run: bash scripts/apply-item-assistant-bridge.sh upstream/iagd
+      - name: Build patched Item Assistant
+        shell: pwsh
+        run: >-
+          dotnet build upstream/iagd/IAGrim-core.sln
+          -c Release
+          -p:Version=1.5.9700.13021
+          -p:AssemblyVersion=1.5.9700.13021
+          -p:FileVersion=1.5.9700.13021
+          -p:InformationalVersion=1.5.9700.13021+decky.0.1.0
+          --nologo
+      - name: Verify bridge output
+        shell: pwsh
+        run: |
+          $dll = "upstream/iagd/IAGrim/bin/Release/net10.0-windows/IAGrim.dll"
+          if (-not (Test-Path $dll)) { throw "Missing patched IAGrim.dll" }
+          $text = [Text.Encoding]::Unicode.GetString([IO.File]::ReadAllBytes($dll))
+          if (-not $text.Contains("Decky item transfer bridge started")) { throw "Bridge marker missing" }

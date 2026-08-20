@@ -1,0 +1,74 @@
+diff --git a/IAGrim/Utilities/GlobalPaths.cs b/IAGrim/Utilities/GlobalPaths.cs
+--- a/IAGrim/Utilities/GlobalPaths.cs
++++ b/IAGrim/Utilities/GlobalPaths.cs
+@@ -124,6 +124,14 @@ namespace IAGrim.Utilities {
+             }
+         }
+
++        public static string DeckyBridge {
++            get {
++                string path = Path.Combine(CoreFolder, "decky-bridge");
++                Directory.CreateDirectory(path);
++                return path;
++            }
++        }
++
+         public static string LinuxHack {
+             get {
+                 string path = Path.Combine(CoreFolder, "linuxhack");
+diff --git a/IAGrim/UI/Controller/ItemTransferController.cs b/IAGrim/UI/Controller/ItemTransferController.cs
+--- a/IAGrim/UI/Controller/ItemTransferController.cs
++++ b/IAGrim/UI/Controller/ItemTransferController.cs
+@@ -114,6 +114,10 @@ namespace IAGrim.UI.Controller {
+         /// MUST BE CALLED ON SQL THREAD
+         /// </summary>
+         public void TransferItem(StashTransferEventArgs args) {
++            TransferItem(args, true);
++        }
++
++        internal void TransferItem(StashTransferEventArgs args, bool allowModPicker) {
+             Logger.Debug($"Item transfer requested, arguments: {args}");
+
+             List<PlayerItem>? items = GetItemsForTransfer(args);
+@@ -121,7 +125,7 @@ namespace IAGrim.UI.Controller {
+
+             StashPickerResult? modOverride = null;
+             if (items?.Count > 0) {
+-                if (_settingsService.GetPersistent().TransferAnyMod) {
++                if (allowModPicker && _settingsService.GetPersistent().TransferAnyMod) {
+                     StashPicker picker = new StashPicker(_browser, _dao, _settingsService);
+                     if (picker.ShowDialog() == DialogResult.OK) {
+                         modOverride = picker.Result;
+diff --git a/IAGrim/UI/MainWindow.cs b/IAGrim/UI/MainWindow.cs
+--- a/IAGrim/UI/MainWindow.cs
++++ b/IAGrim/UI/MainWindow.cs
+@@ -64,6 +64,7 @@ namespace IAGrim.UI {
+         private BuddyItemsService? _buddyItemsService;
+         private BackgroundTask? _backupBackgroundTask;
+         private ItemTransferController? _transferController;
++        private DeckyBridgeController? _deckyBridgeController;
+         private readonly ParsingService _parsingService;
+         private AuthService? _authService;
+         private BackupServiceWorker? _backupServiceWorker;
+@@ -313,6 +314,9 @@ namespace IAGrim.UI {
+             FormClosing -= MainWindow_FormClosing;
+             SizeChanged -= OnMinimizeWindow;
+
++            _deckyBridgeController?.Dispose();
++            _deckyBridgeController = null;
++
+             _authService?.Dispose();
+             _authService = null;
+
+@@ -712,6 +716,10 @@ namespace IAGrim.UI {
+             _transferController.OnItemsTransferredToGame += (_, arg) => {
+                 _webSocketSyncService?.SendDeletions(arg.CloudIds);
+             };
++
++            if (WineDetector.IsRunningInWine()) {
++                _deckyBridgeController = new DeckyBridgeController(_transferController);
++            }
+
+             _csvFileMonitor.StartMonitoring(GlobalPaths.CsvLocationIngoing, "*.csv");
+             _replicaCsvFileMonitor.StartMonitoring(GlobalPaths.CsvReplicaReadLocation, "*.json");
+             _csvParsingService.Start();

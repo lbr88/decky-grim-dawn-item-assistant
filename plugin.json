@@ -1,0 +1,11 @@
+{
+  "name": "GD Item Assistant",
+  "author": "LBR88",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["grim-dawn", "inventory", "utility"],
+    "description": "Search Item Assistant storage and send selected items to Grim Dawn.",
+    "image": "https://raw.githubusercontent.com/lbr88/decky-grim-dawn-item-assistant/main/assets/logo.svg"
+  }
+}
