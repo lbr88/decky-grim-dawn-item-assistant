@@ -19,6 +19,15 @@ The plugin provides:
 - explicit item selection followed by a separate transfer action
 - status checks for Item Assistant, Grim Dawn and the bridge
 
+## Required companion setup
+
+This plugin extends the setup provided by
+[Grim Dawn Item Assistant on Steam Deck](https://github.com/lbr88/grim-dawn-item-assistant-steam-deck).
+Use that project's one-click installer first if Item Assistant and the combined
+Grim Dawn launcher are not already working. It handles the Proton environment,
+Windows dependencies and start order; this repository adds the optional Decky
+Quick Access interface and item-transfer bridge.
+
 ## Requirements
 
 - SteamOS on Steam Deck
