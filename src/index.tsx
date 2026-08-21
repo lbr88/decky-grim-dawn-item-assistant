@@ -652,7 +652,7 @@ function Content() {
                 label="Minimum item contribution"
                 value={filters.minimumResistance}
                 min={1}
-                max={80}
+                max={200}
                 step={1}
                 showValue
                 editableValue
