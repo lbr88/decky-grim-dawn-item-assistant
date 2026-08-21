@@ -99,3 +99,11 @@ class Plugin:
         except Exception:
             decky.logger.exception("Character list request failed")
             return []
+
+    async def get_build_options(self):
+        try:
+            options = await asyncio.to_thread(self._controller.build_options)
+            return options.to_dict()
+        except Exception:
+            decky.logger.exception("Build options request failed")
+            return {"masteries": [], "skills": []}

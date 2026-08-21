@@ -16,7 +16,7 @@ class ReleaseFileTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["flags"], [])
         self.assertEqual(plugin["name"], "GD Item Assistant")
-        self.assertEqual(package["version"], "0.2.0")
+        self.assertEqual(package["version"], "0.3.0")
 
     def test_shell_scripts_parse(self) -> None:
         scripts = [
@@ -30,7 +30,7 @@ class ReleaseFileTests(unittest.TestCase):
     def test_desktop_launcher_is_pinned_and_not_marked_executable(self) -> None:
         launcher = ROOT / "Install-GDIA-Decky.desktop"
         content = launcher.read_text(encoding="utf-8")
-        self.assertIn("/v0.2.0/scripts/install.sh", content)
+        self.assertIn("/v0.3.0/scripts/install.sh", content)
         self.assertFalse(launcher.stat().st_mode & 0o111)
 
     def test_bridge_build_preserves_upstream_dependency_versions(self) -> None:
@@ -83,6 +83,17 @@ class ReleaseFileTests(unittest.TestCase):
         self.assertIn("showModal(", source)
         self.assertIn("<ConfirmModal", source)
         self.assertIn('strCancelButtonText="Back"', source)
+
+    def test_build_assistance_selectors_are_packaged(self) -> None:
+        source = (ROOT / "src/index.tsx").read_text(encoding="utf-8")
+        for label in (
+            'title="Resistance planner"',
+            'label="Item slot"',
+            'label="Mastery bonuses"',
+            'label="Specific skill bonus"',
+            'label="Minimum item contribution"',
+        ):
+            self.assertIn(label, source)
 
 
 if __name__ == "__main__":

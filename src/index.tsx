@@ -35,6 +35,16 @@ type InventoryItem = {
   slot: string;
   storedAt: string;
   highlights: ItemStat[];
+  buildBonuses: ItemBuildBonus[];
+  matchReasons: string[];
+};
+
+type ItemBuildBonus = {
+  kind: string;
+  name: string;
+  masteryId: string;
+  value: number;
+  displayValue: string;
 };
 
 type ItemStat = {
@@ -59,6 +69,11 @@ type CharacterSummary = {
   modifiedAt: string;
 };
 
+type BuildOptions = {
+  masteries: { masteryId: string; name: string }[];
+  skills: { name: string; masteryId: string }[];
+};
+
 type SearchResult = {
   items: InventoryItem[];
   total: number;
@@ -75,6 +90,11 @@ type SearchFilters = {
   minimumLevel: number;
   maximumLevel: number;
   sort: string;
+  slot: string;
+  resistance: string;
+  minimumResistance: number;
+  mastery: string;
+  skill: string;
   offset: number;
   limit: number;
 };
@@ -90,6 +110,7 @@ const searchItems = callable<[SearchFilters], SearchResult>("search_items");
 const transferItem = callable<[number], OperationResult>("transfer_item");
 const getItemDetails = callable<[number], ItemDetails | null>("get_item_details");
 const listCharacters = callable<[], CharacterSummary[]>("list_characters");
+const getBuildOptions = callable<[], BuildOptions>("get_build_options");
 
 const PAGE_SIZE = 20;
 const DEFAULT_FILTERS: SearchFilters = {
@@ -99,6 +120,11 @@ const DEFAULT_FILTERS: SearchFilters = {
   minimumLevel: 0,
   maximumLevel: 100,
   sort: "name",
+  slot: "all",
+  resistance: "all",
+  minimumResistance: 1,
+  mastery: "all",
+  skill: "",
   offset: 0,
   limit: PAGE_SIZE,
 };
@@ -122,6 +148,49 @@ const sortOptions = [
   { data: "level_desc", label: "Level: high to low" },
   { data: "level_asc", label: "Level: low to high" },
   { data: "recent", label: "Recently stored" },
+  { data: "resistance_desc", label: "Selected resistance: high to low" },
+];
+
+const slotOptions = [
+  { data: "all", label: "All item slots" },
+  { data: "ArmorProtective_Head", label: "Head Armor" },
+  { data: "ArmorProtective_Chest", label: "Chest Armor" },
+  { data: "ArmorProtective_Legs", label: "Leg Armor" },
+  { data: "ArmorProtective_Feet", label: "Boots" },
+  { data: "ArmorProtective_Hands", label: "Gloves" },
+  { data: "ArmorProtective_Shoulders", label: "Shoulders" },
+  { data: "ArmorProtective_Waist", label: "Belt" },
+  { data: "ArmorJewelry_Amulet", label: "Amulet" },
+  { data: "ArmorJewelry_Ring", label: "Ring" },
+  { data: "ArmorJewelry_Medal", label: "Medal" },
+  { data: "ItemArtifact", label: "Relic" },
+  { data: "ItemEnchantment", label: "Augment / Enchantment" },
+  { data: "WeaponArmor_Offhand", label: "Caster Off-hand" },
+  { data: "WeaponArmor_Shield", label: "Shield" },
+  { data: "WeaponMelee_Sword", label: "One-handed Sword" },
+  { data: "WeaponMelee_Sword2h", label: "Two-handed Sword" },
+  { data: "WeaponMelee_Mace", label: "One-handed Mace" },
+  { data: "WeaponMelee_Mace2h", label: "Two-handed Mace" },
+  { data: "WeaponMelee_Axe", label: "One-handed Axe" },
+  { data: "WeaponMelee_Axe2h", label: "Two-handed Axe" },
+  { data: "WeaponMelee_Dagger", label: "Dagger" },
+  { data: "WeaponMelee_Scepter", label: "Scepter" },
+  { data: "WeaponMelee_Spear2h", label: "Two-handed Spear" },
+  { data: "WeaponHunting_Ranged1h", label: "One-handed Ranged" },
+  { data: "WeaponHunting_Ranged2h", label: "Two-handed Ranged" },
+];
+
+const resistanceOptions = [
+  { data: "all", label: "Any resistance" },
+  { data: "fire", label: "Fire" },
+  { data: "cold", label: "Cold" },
+  { data: "lightning", label: "Lightning" },
+  { data: "pierce", label: "Pierce" },
+  { data: "poison", label: "Poison & Acid" },
+  { data: "bleeding", label: "Bleeding" },
+  { data: "vitality", label: "Vitality" },
+  { data: "aether", label: "Aether" },
+  { data: "chaos", label: "Chaos" },
 ];
 
 const rarityColor = (rarity: string) => {
@@ -165,12 +234,39 @@ const eligibilityText = (item: InventoryItem, character: CharacterSummary | null
   return `${character.name} needs ${item.level - character.level} more level${item.level - character.level === 1 ? "" : "s"}`;
 };
 
+const characterMasteryIds = (className: string) => {
+  const suffix = className.replace("tagSkillClassName", "");
+  return suffix.match(/.{2}/g)?.map((part) => `class${part}`) ?? [];
+};
+
+const RESISTANCE_STORAGE_KEY = "gdia-resistance-profiles-v1";
+
+const loadResistanceProfiles = (): Record<string, Record<string, number>> => {
+  try {
+    const value = window.localStorage.getItem(RESISTANCE_STORAGE_KEY);
+    return value ? JSON.parse(value) : {};
+  } catch {
+    return {};
+  }
+};
+
 const ItemSummary = ({ item, character }: { item: InventoryItem; character: CharacterSummary | null }) => (
   <div style={{ lineHeight: 1.45 }}>
     <div>{itemDescription(item)}</div>
+    {item.matchReasons.length ? (
+      <div style={{ color: "#8ed68e", marginTop: 3 }}>
+        Helps: {item.matchReasons.join(" · ")}
+      </div>
+    ) : null}
     {item.highlights.length ? (
       <div style={{ color: "#c7d5e0", marginTop: 3 }}>
         {item.highlights.map((stat) => stat.displayValue).join(" · ")}
+      </div>
+    ) : null}
+    {item.buildBonuses.length ? (
+      <div style={{ color: "#8fb8e8", marginTop: 3 }}>
+        {item.buildBonuses.slice(0, 2).map((bonus) => bonus.displayValue).join(" · ")}
+        {item.buildBonuses.length > 2 ? ` · +${item.buildBonuses.length - 2} more` : ""}
       </div>
     ) : null}
     {character ? (
@@ -228,6 +324,16 @@ function ItemDetailsModal({ item, canTransfer, character, onTransfer }: ItemDeta
           ) : null}
           {loading ? <div>Loading item stats…</div> : null}
           {!loading && !details ? <div>Item details are no longer available.</div> : null}
+          {details?.item.buildBonuses.length ? (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>Skills & masteries</div>
+              {details.item.buildBonuses.map((bonus) => (
+                <div key={`${bonus.kind}-${bonus.name}`} style={{ lineHeight: 1.45 }}>
+                  {bonus.displayValue}
+                </div>
+              ))}
+            </div>
+          ) : null}
           {Object.entries(grouped).map(([category, stats]) => (
             <div key={category} style={{ marginBottom: 12 }}>
               <div style={{ fontWeight: 700, marginBottom: 4 }}>{category}</div>
@@ -261,7 +367,13 @@ function Content() {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [results, setResults] = useState<SearchResult | null>(null);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
+  const [buildOptions, setBuildOptions] = useState<BuildOptions>({
+    masteries: [],
+    skills: [],
+  });
   const [characterId, setCharacterId] = useState("");
+  const [resistanceProfiles, setResistanceProfiles] = useState(loadResistanceProfiles);
+  const [targetResistance, setTargetResistance] = useState(80);
   const [busy, setBusy] = useState(false);
 
   const refreshStatus = useCallback(async () => {
@@ -312,6 +424,9 @@ function Content() {
         setCharacterId((current) => current || next[0]?.characterId || "");
       })
       .catch((error) => console.error("GD Item Assistant character scan failed", error));
+    void getBuildOptions()
+      .then(setBuildOptions)
+      .catch((error) => console.error("GD Item Assistant build options failed", error));
     const timer = window.setInterval(() => void refreshStatus(), 5000);
     return () => window.clearInterval(timer);
   }, []);
@@ -341,6 +456,49 @@ function Content() {
     status.itemAssistantRunning &&
     status.grimDawnRunning;
   const selectedCharacter = characters.find((character) => character.characterId === characterId) ?? null;
+  const selectedCharacterMasteries = new Set(
+    characterMasteryIds(selectedCharacter?.className ?? ""),
+  );
+  const masteryOptions = [
+    { data: "all", label: "Any mastery" },
+    ...buildOptions.masteries.map((mastery) => ({
+      data: mastery.masteryId,
+      label: `${mastery.name}${selectedCharacterMasteries.has(mastery.masteryId) ? " · Character mastery" : ""}`,
+    })),
+  ];
+  const skillOptions = [
+    { data: "", label: "Any skill bonus" },
+    ...buildOptions.skills
+      .filter((skill) => filters.mastery !== "all" && skill.masteryId === filters.mastery)
+      .map((skill) => ({ data: skill.name, label: skill.name })),
+  ];
+  const resistanceProfileId = characterId || "manual";
+  const currentResistance = filters.resistance === "all"
+    ? 0
+    : resistanceProfiles[resistanceProfileId]?.[filters.resistance] ?? 0;
+  const resistanceGap = Math.max(0, targetResistance - currentResistance);
+  const selectedResistanceLabel = resistanceOptions.find(
+    (option) => option.data === filters.resistance,
+  )?.label ?? "Resistance";
+
+  const updateCurrentResistance = (value: number) => {
+    if (filters.resistance === "all") return;
+    setResistanceProfiles((current) => {
+      const next = {
+        ...current,
+        [resistanceProfileId]: {
+          ...(current[resistanceProfileId] ?? {}),
+          [filters.resistance]: value,
+        },
+      };
+      try {
+        window.localStorage.setItem(RESISTANCE_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Session-only guidance still works when storage is unavailable.
+      }
+      return next;
+    });
+  };
 
   const showUsableItems = () => {
     if (!selectedCharacter) return;
@@ -348,6 +506,16 @@ function Content() {
       minimumLevel: 0,
       maximumLevel: selectedCharacter.level,
       mode: selectedCharacter.hardcore ? "hardcore" : "softcore",
+    };
+    setFilters((current) => ({ ...current, ...overrides, offset: 0 }));
+    void runSearch(0, false, overrides);
+  };
+
+  const findResistanceFixes = () => {
+    if (filters.resistance === "all") return;
+    const overrides: Partial<SearchFilters> = {
+      minimumResistance: Math.max(1, resistanceGap),
+      sort: "resistance_desc",
     };
     setFilters((current) => ({ ...current, ...overrides, offset: 0 }));
     void runSearch(0, false, overrides);
@@ -409,7 +577,7 @@ function Content() {
           </PanelSectionRow>
           <PanelSectionRow>
             <div style={{ opacity: 0.72 }}>
-              Guidance is read locally from the character save. It checks level and mode; it does not modify the save.
+              Level, mode, and masteries are read locally. Resistance values you enter are saved only in Decky's local browser storage; character saves are never modified.
             </div>
           </PanelSectionRow>
           {selectedCharacter ? (
@@ -421,6 +589,92 @@ function Content() {
           ) : null}
         </PanelSection>
       ) : null}
+
+      <PanelSection title="Resistance planner">
+        <PanelSectionRow>
+          <DropdownItem
+            label="Resistance to improve"
+            rgOptions={resistanceOptions}
+            selectedOption={filters.resistance}
+            onChange={(option) => {
+              const resistance = String(option.data);
+              setFilters((current) => ({
+                ...current,
+                resistance,
+                minimumResistance: 1,
+                sort: resistance === "all" && current.sort === "resistance_desc"
+                  ? "name"
+                  : current.sort,
+              }));
+            }}
+          />
+        </PanelSectionRow>
+        {filters.resistance !== "all" ? (
+          <>
+            <PanelSectionRow>
+              <SliderField
+                label={`Current ${selectedResistanceLabel}`}
+                value={currentResistance}
+                min={-50}
+                max={100}
+                step={1}
+                showValue
+                editableValue
+                onChange={updateCurrentResistance}
+              />
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <SliderField
+                label="Desired total (includes overcap)"
+                value={targetResistance}
+                min={80}
+                max={120}
+                step={5}
+                showValue
+                editableValue
+                onChange={setTargetResistance}
+              />
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <div style={{ width: "100%", lineHeight: 1.45 }}>
+                <strong>
+                  {resistanceGap > 0
+                    ? `${resistanceGap}% ${selectedResistanceLabel} Resistance needed`
+                    : `${selectedResistanceLabel} target reached`}
+                </strong>
+                <div style={{ opacity: 0.72, marginTop: 3 }}>
+                  Results show gross resistance on the stored item. Replacing equipped gear can remove some resistance, so verify the final total in Grim Dawn.
+                </div>
+              </div>
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <SliderField
+                label="Minimum item contribution"
+                value={filters.minimumResistance}
+                min={1}
+                max={200}
+                step={1}
+                showValue
+                editableValue
+                onChange={(minimumResistance) =>
+                  setFilters((current) => ({ ...current, minimumResistance }))
+                }
+              />
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <ButtonItem layout="below" disabled={busy} onClick={findResistanceFixes}>
+                Find items that can cover this gap
+              </ButtonItem>
+            </PanelSectionRow>
+          </>
+        ) : (
+          <PanelSectionRow>
+            <div style={{ opacity: 0.72 }}>
+              Choose a resistance, enter the value shown on your character sheet, and set the desired overcap.
+            </div>
+          </PanelSectionRow>
+        )}
+      </PanelSection>
 
       <PanelSection title="Find an item">
         <PanelSectionRow>
@@ -441,6 +695,19 @@ function Content() {
                 void runSearch();
               }
             }}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <DropdownItem
+            label="Item slot"
+            rgOptions={slotOptions}
+            selectedOption={filters.slot}
+            onChange={(option) =>
+              setFilters((current) => ({
+                ...current,
+                slot: String(option.data),
+              }))
+            }
           />
         </PanelSectionRow>
         <PanelSectionRow>
@@ -471,8 +738,39 @@ function Content() {
         </PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
+            label="Mastery bonuses"
+            rgOptions={masteryOptions}
+            selectedOption={filters.mastery}
+            onChange={(option) =>
+              setFilters((current) => ({
+                ...current,
+                mastery: String(option.data),
+                skill: "",
+              }))
+            }
+          />
+        </PanelSectionRow>
+        {filters.mastery !== "all" ? (
+          <PanelSectionRow>
+            <DropdownItem
+              label="Specific skill bonus"
+              rgOptions={skillOptions}
+              selectedOption={filters.skill}
+              onChange={(option) =>
+                setFilters((current) => ({
+                  ...current,
+                  skill: String(option.data),
+                }))
+              }
+            />
+          </PanelSectionRow>
+        ) : null}
+        <PanelSectionRow>
+          <DropdownItem
             label="Sort by"
-            rgOptions={sortOptions}
+            rgOptions={sortOptions.filter(
+              (option) => option.data !== "resistance_desc" || filters.resistance !== "all",
+            )}
             selectedOption={filters.sort}
             onChange={(option) =>
               setFilters((current) => ({

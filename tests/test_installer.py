@@ -160,6 +160,43 @@ class InstallerTests(unittest.TestCase):
             (self.iagd / "IAGrim.dll.pre-decky").read_bytes(), self.original
         )
 
+    def test_running_game_allows_plugin_update_with_verified_compatible_bridge(self) -> None:
+        previous = b"previous verified Item Assistant bridge"
+        (self.iagd / "IAGrim.dll").write_bytes(previous)
+        (self.iagd / "IAGrim.dll.pre-decky").write_bytes(self.original)
+        (self.iagd / "decky-bridge-manifest.json").write_text(
+            json.dumps(
+                {
+                    "bridgeVersion": 1,
+                    "pluginVersion": "0.0.9",
+                    "itemAssistantVersion": "1.5.9700.13021",
+                    "originalDllSha256": hashlib.sha256(self.original).hexdigest(),
+                    "patchedDllSha256": hashlib.sha256(previous).hexdigest(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.environment["GDIA_TEST_PROCESSES_RUNNING"] = "1"
+
+        result = self._run_installer()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("compatible bridge is running", result.stdout)
+        self.assertEqual((self.iagd / "IAGrim.dll").read_bytes(), previous)
+        installed = self.plugin_parent / "decky-grim-dawn-item-assistant"
+        self.assertTrue((installed / "dist/index.js").is_file())
+
+    def test_running_game_refuses_when_bridge_is_not_installed(self) -> None:
+        self.environment["GDIA_TEST_PROCESSES_RUNNING"] = "1"
+
+        result = self._run_installer()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("install the required bridge", result.stderr)
+        self.assertFalse(
+            (self.plugin_parent / "decky-grim-dawn-item-assistant").exists()
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

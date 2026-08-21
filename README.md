@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.2.0 is a public alpha. The complete transfer path is built and tested
+Version 0.3.0 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
@@ -20,6 +20,12 @@ The plugin provides:
 - a gamepad-aware details modal with categorized computed stats
 - local character-level and softcore/hardcore eligibility guidance
 - a one-button filter for items the selected character can use
+- item-slot filtering
+- resistance-gap planning with per-character local values, overcap targets,
+  minimum contribution filtering, and best-contribution sorting
+- mastery and individual skill-bonus selectors sourced from Grim Dawn's item
+  database, with the selected character's masteries identified
+- skill, mastery, and granted-item-skill bonuses shown in rows and item details
 - direct transfer from the item details modal
 - status checks for Item Assistant, Grim Dawn and the bridge
 
@@ -53,8 +59,10 @@ The installer is idempotent: it skips pieces already at the requested version.
 It recognizes only the verified original or a bridge recorded by a valid local
 manifest, backs up the original before replacement, and refuses unknown builds.
 Plugin files are staged outside Decky's watched plugin directory before an
-atomic move into place. Item Assistant and Grim Dawn must be closed while it
-runs.
+atomic move into place. Item Assistant and Grim Dawn must be closed for the
+first bridge installation or a required bridge upgrade. Plugin-only updates can
+proceed while the game is running when the installed bridge is verified and
+API-compatible.
 
 ## Use
 
@@ -62,9 +70,11 @@ runs.
    starts first, then Grim Dawn starts in front.
 2. Open Quick Access, choose **GD Item Assistant**, and search or filter storage.
 3. Optionally choose a local character for level/mode guidance.
-4. Choose an item row to see its complete computed stat breakdown.
-5. Choose **Send to game**, or press **B** to return to the same results.
-6. Open the transfer stash in Grim Dawn to collect the item.
+4. Use the resistance planner, slot filter, or mastery and skill selectors to
+   explain what an item should help with.
+5. Choose an item row to see its complete computed stat and skill breakdown.
+6. Choose **Send to game**, or press **B** to return to the same results.
+7. Open the transfer stash in Grim Dawn to collect the item.
 
 Transfers remain disabled unless Item Assistant, Grim Dawn and bridge version 1
 are all detected. A timed-out request is reported as uncertain; refresh the
@@ -78,7 +88,11 @@ input sizes are bounded, and sort expressions come from a fixed allowlist.
 Computed stats and equipment-slot metadata are read in bounded batches for the
 visible result page. The character selector decrypts only the local
 `player.gdc` header to read name, level and mode; it does not write character
-saves or attempt to assign a subjective universal upgrade score.
+saves or attempt to assign a subjective universal upgrade score. Resistance
+planner values are manually copied from the in-game character sheet and stored
+only in Decky's local browser storage. Item contributions are gross values:
+replacing equipped gear can remove stats, so the final total must be checked in
+Grim Dawn.
 
 Item Assistant does not expose a transfer API. The Wine-only bridge polls a
 private directory under Item Assistant's existing data folder for a narrowly

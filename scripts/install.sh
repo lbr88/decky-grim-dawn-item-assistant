@@ -34,9 +34,11 @@ for command in "${required_commands[@]}"; do
     command -v "${command}" >/dev/null || fail "Missing required command: ${command}"
 done
 
-if [[ -z "${GDIA_TEST_MODE:-}" ]] && \
-    (pgrep -x "IAGrim.exe" >/dev/null 2>&1 || pgrep -x "Grim Dawn.exe" >/dev/null 2>&1); then
-    fail "Close Grim Dawn and Item Assistant before installing."
+processes_running=false
+if [[ -n "${GDIA_TEST_PROCESSES_RUNNING:-}" ]] || \
+    { [[ -z "${GDIA_TEST_MODE:-}" ]] && \
+      (pgrep -x "IAGrim.exe" >/dev/null 2>&1 || pgrep -x "Grim Dawn.exe" >/dev/null 2>&1); }; then
+    processes_running=true
 fi
 [[ -f "${iagd_dir}/IAGrim.dll" ]] || fail "Item Assistant was not found at ${iagd_dir}"
 [[ -d "${plugin_parent}" ]] || fail "Decky Loader was not found at ${plugin_parent}"
@@ -175,6 +177,9 @@ fi
 if [[ "${current_hash}" == "${patched_hash}" ]]; then
     echo "Item Assistant bridge is already installed; skipping."
 elif [[ "${current_hash}" == "${original_hash}" ]]; then
+    if [[ "${processes_running}" == true ]]; then
+        fail "Close Grim Dawn and Item Assistant to install the required bridge."
+    fi
     if [[ -f "${backup}" ]]; then
         backup_hash="$(sha256sum "${backup}" | awk '{ print $1 }')"
         [[ "${backup_hash}" == "${original_hash}" ]] \
@@ -185,8 +190,12 @@ elif [[ "${current_hash}" == "${original_hash}" ]]; then
     install_bridge_files
     echo "Installed Item Assistant bridge; original saved as ${backup}"
 elif [[ "${previous_bridge_verified}" == true ]]; then
-    echo "Upgrading verified Item Assistant bridge."
-    install_bridge_files
+    if [[ "${processes_running}" == true ]]; then
+        echo "A compatible bridge is running; leaving it in place for this plugin update."
+    else
+        echo "Upgrading verified Item Assistant bridge."
+        install_bridge_files
+    fi
 else
     fail "Installed IAGrim.dll is not the verified original or this bridge build; no files were changed."
 fi
