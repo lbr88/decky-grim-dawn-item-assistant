@@ -91,9 +91,62 @@ class InventoryRepositoryTests(unittest.TestCase):
         self.assertIsNotNone(details)
         assert details is not None
         self.assertEqual(details.item.slot, "Chest Armor")
-        self.assertEqual(len(details.stats), 4)
+        self.assertEqual(len(details.stats), 7)
         self.assertEqual(details.item.stored_at, "2026-01-01T00:00:00Z")
         self.assertEqual(details.stats[-1].display_value, "+102% Aether Damage")
+        self.assertEqual(
+            [bonus.display_value for bonus in details.item.build_bonuses],
+            [
+                "+2 to all skills in Arcanist",
+                "+3 to Iskandra's Elemental Exchange",
+                "Grants Aether Nova",
+            ],
+        )
+
+    def test_filters_by_slot_and_resistance_contribution(self) -> None:
+        result = self.repository.search(
+            {
+                "slot": "ArmorProtective_Chest",
+                "resistance": "fire",
+                "minimumResistance": 25,
+                "sort": "resistance_desc",
+            }
+        )
+        self.assertEqual([item.name for item in result.items], ["Aetherfire"])
+        self.assertEqual(result.items[0].match_reasons[0], "+27% Fire Resistance")
+
+    def test_filters_by_mastery_and_specific_skill_bonus(self) -> None:
+        mastery = self.repository.search({"mastery": "class05"})
+        skill = self.repository.search(
+            {"mastery": "class05", "skill": "Iskandra's Elemental Exchange"}
+        )
+        self.assertEqual([item.name for item in mastery.items], ["Aetherfire"])
+        self.assertEqual([item.name for item in skill.items], ["Aetherfire"])
+        self.assertIn("+3 to Iskandra's Elemental Exchange", skill.items[0].match_reasons)
+
+    def test_lists_masteries_and_skills_from_item_database(self) -> None:
+        options = self.repository.build_options()
+        self.assertEqual(
+            [(mastery.mastery_id, mastery.name) for mastery in options.masteries],
+            [("class05", "Arcanist"), ("class04", "Nightblade")],
+        )
+        self.assertEqual(
+            [(skill.name, skill.mastery_id) for skill in options.skills],
+            [("Iskandra's Elemental Exchange", "class05")],
+        )
+
+    def test_invalid_build_selectors_are_ignored_and_contribution_is_bounded(self) -> None:
+        result = self.repository.search(
+            {
+                "slot": "DROP TABLE PlayerItem",
+                "resistance": "anything",
+                "minimumResistance": 999,
+                "mastery": "class99",
+                "skill": "fake skill",
+                "sort": "resistance_desc",
+            }
+        )
+        self.assertEqual(result.total, 0)
 
 
 if __name__ == "__main__":

@@ -58,6 +58,24 @@ class ItemStat:
 
 
 @dataclass(frozen=True)
+class ItemBuildBonus:
+    kind: str
+    name: str
+    mastery_id: str
+    value: int
+    display_value: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind,
+            "name": self.name,
+            "masteryId": self.mastery_id,
+            "value": self.value,
+            "displayValue": self.display_value,
+        }
+
+
+@dataclass(frozen=True)
 class InventoryItem:
     player_item_id: int
     name: str
@@ -69,6 +87,8 @@ class InventoryItem:
     slot: str = ""
     stored_at: str = ""
     highlights: tuple[ItemStat, ...] = field(default_factory=tuple)
+    build_bonuses: tuple[ItemBuildBonus, ...] = field(default_factory=tuple)
+    match_reasons: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -82,6 +102,8 @@ class InventoryItem:
             "slot": self.slot,
             "storedAt": self.stored_at,
             "highlights": [stat.to_dict() for stat in self.highlights],
+            "buildBonuses": [bonus.to_dict() for bonus in self.build_bonuses],
+            "matchReasons": list(self.match_reasons),
         }
 
 
@@ -114,6 +136,36 @@ class CharacterSummary:
             "hardcore": self.hardcore,
             "className": self.class_name,
             "modifiedAt": self.modified_at,
+        }
+
+
+@dataclass(frozen=True)
+class MasteryOption:
+    mastery_id: str
+    name: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"masteryId": self.mastery_id, "name": self.name}
+
+
+@dataclass(frozen=True)
+class SkillOption:
+    name: str
+    mastery_id: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"name": self.name, "masteryId": self.mastery_id}
+
+
+@dataclass(frozen=True)
+class BuildOptions:
+    masteries: tuple[MasteryOption, ...]
+    skills: tuple[SkillOption, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "masteries": [mastery.to_dict() for mastery in self.masteries],
+            "skills": [skill.to_dict() for skill in self.skills],
         }
 
 

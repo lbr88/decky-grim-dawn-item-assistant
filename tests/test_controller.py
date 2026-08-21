@@ -5,7 +5,15 @@ import unittest
 from pathlib import Path
 
 from backend.controller import GdiaController
-from backend.models import InventoryItem, ItemDetails, ItemStat, OperationResult
+from backend.models import (
+    BuildOptions,
+    InventoryItem,
+    ItemDetails,
+    ItemStat,
+    MasteryOption,
+    OperationResult,
+    SkillOption,
+)
 
 from .helpers import make_paths
 
@@ -32,6 +40,12 @@ class FakeInventory:
                 (ItemStat("characterLife", "Health", 100, "+100 Health", "Defense"),),
             )
         return None
+
+    def build_options(self) -> BuildOptions:
+        return BuildOptions(
+            (MasteryOption("class05", "Arcanist"),),
+            (SkillOption("Panetti's Replicating Missile", "class05"),),
+        )
 
 
 class FakeBridge:
@@ -107,6 +121,15 @@ class ControllerTests(unittest.TestCase):
         assert details is not None
         self.assertEqual(details.stats[0].display_value, "+100 Health")
         self.assertEqual(bridge.transferred, [])
+
+    def test_build_options_are_delegated_to_read_only_inventory(self) -> None:
+        controller = GdiaController(
+            paths=self.paths,
+            inventory=FakeInventory(self.item),
+            bridge=FakeBridge(),
+            process_checker=lambda name: False,
+        )
+        self.assertEqual(controller.build_options().masteries[0].name, "Arcanist")
 
 
 if __name__ == "__main__":

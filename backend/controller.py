@@ -5,7 +5,14 @@ from typing import Callable
 from .bridge import BridgeClient
 from .characters import CharacterRepository
 from .inventory import InventoryError, InventoryRepository
-from .models import CharacterSummary, ItemDetails, OperationResult, PluginStatus, SearchResult
+from .models import (
+    BuildOptions,
+    CharacterSummary,
+    ItemDetails,
+    OperationResult,
+    PluginStatus,
+    SearchResult,
+)
 from .paths import GdiaPaths
 from .processes import any_process_named
 
@@ -65,6 +72,9 @@ class GdiaController:
 
     def list_characters(self) -> tuple[CharacterSummary, ...]:
         return self.characters.list()
+
+    def build_options(self) -> BuildOptions:
+        return self.inventory.build_options()
 
     def transfer(self, player_item_id: int) -> OperationResult:
         item = self.inventory.get_item(player_item_id)
