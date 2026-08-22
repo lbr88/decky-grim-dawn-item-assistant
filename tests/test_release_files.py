@@ -16,7 +16,7 @@ class ReleaseFileTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["flags"], [])
         self.assertEqual(plugin["name"], "GD Item Assistant")
-        self.assertEqual(package["version"], "0.3.0")
+        self.assertEqual(package["version"], "0.3.1")
 
     def test_shell_scripts_parse(self) -> None:
         scripts = [
@@ -30,7 +30,7 @@ class ReleaseFileTests(unittest.TestCase):
     def test_desktop_launcher_is_pinned_and_not_marked_executable(self) -> None:
         launcher = ROOT / "Install-GDIA-Decky.desktop"
         content = launcher.read_text(encoding="utf-8")
-        self.assertIn("/v0.3.0/scripts/install.sh", content)
+        self.assertIn("/v0.3.1/scripts/install.sh", content)
         self.assertFalse(launcher.stat().st_mode & 0o111)
 
     def test_bridge_build_preserves_upstream_dependency_versions(self) -> None:
@@ -83,6 +83,12 @@ class ReleaseFileTests(unittest.TestCase):
         self.assertIn("showModal(", source)
         self.assertIn("<ConfirmModal", source)
         self.assertIn('strCancelButtonText="Back"', source)
+
+    def test_item_modal_lets_decky_choose_a_compatible_parent_window(self) -> None:
+        source = (ROOT / "src/index.tsx").read_text(encoding="utf-8")
+        self.assertIn("const showItemDetails = (item: InventoryItem) => {", source)
+        self.assertIn("onClick={() => showItemDetails(item)}", source)
+        self.assertNotIn("showItemDetails(item, event.currentTarget)", source)
 
     def test_build_assistance_selectors_are_packaged(self) -> None:
         source = (ROOT / "src/index.tsx").read_text(encoding="utf-8")

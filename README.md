@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.3.0 is a public alpha. The complete transfer path is built and tested
+Version 0.3.1 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
@@ -27,6 +27,7 @@ The plugin provides:
   database, with the selected character's masteries identified
 - skill, mastery, and granted-item-skill bonuses shown in rows and item details
 - direct transfer from the item details modal
+- Decky-managed modal placement for compatibility with current Gaming Mode
 - status checks for Item Assistant, Grim Dawn and the bridge
 
 ## Required companion setup
