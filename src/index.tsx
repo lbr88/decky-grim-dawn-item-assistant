@@ -521,7 +521,7 @@ function Content() {
     void runSearch(0, false, overrides);
   };
 
-  const showItemDetails = (item: InventoryItem, parent?: EventTarget | null) => {
+  const showItemDetails = (item: InventoryItem) => {
     showModal(
       <ItemDetailsModal
         item={item}
@@ -529,8 +529,6 @@ function Content() {
         character={selectedCharacter}
         onTransfer={sendItem}
       />,
-      parent ?? undefined,
-      { strTitle: item.name, bHideMainWindowForPopouts: false },
     );
   };
 
@@ -837,7 +835,7 @@ function Content() {
               layout="below"
               description={<ItemSummary item={item} character={selectedCharacter} />}
               disabled={busy}
-              onClick={(event) => showItemDetails(item, event.currentTarget)}
+              onClick={() => showItemDetails(item)}
             >
               <span style={{ color: rarityColor(item.rarity) }}>{item.name}</span>
             </ButtonItem>
