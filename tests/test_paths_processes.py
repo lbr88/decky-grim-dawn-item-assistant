@@ -37,6 +37,30 @@ class PathAndProcessTests(unittest.TestCase):
             self.assertTrue(any_process_named("IAGrim.exe", proc_root))
             self.assertFalse(any_process_named("Grim Dawn.exe", proc_root))
 
+    def test_process_matching_survives_wine_main_thread_rename(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            proc_root = Path(temporary_directory)
+            (proc_root / "296").mkdir()
+            (proc_root / "296/comm").write_text("Main\n", encoding="utf-8")
+            (proc_root / "296/cmdline").write_bytes(
+                b"C:\\Program Files\\IAGD\\IAGrim.exe\0"
+            )
+
+            self.assertTrue(any_process_named("IAGrim.exe", proc_root))
+
+    def test_process_matching_rejects_a_truncated_command_name(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            proc_root = Path(temporary_directory)
+            (proc_root / "297").mkdir()
+            (proc_root / "297/comm").write_text("Main\n", encoding="utf-8")
+            prefix_length = 4096 - len(b"IAGrim.exe")
+            padding = b"C:\\" + (b"x" * (prefix_length - 4)) + b"\\"
+            (proc_root / "297/cmdline").write_bytes(
+                padding + b"IAGrim.exe.bad\0"
+            )
+
+            self.assertFalse(any_process_named("IAGrim.exe", proc_root))
+
 
 if __name__ == "__main__":
     unittest.main()

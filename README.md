@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.3.2 is a public alpha. The complete transfer path is built and tested
+Version 0.3.3 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
@@ -30,6 +30,7 @@ The plugin provides:
 - Decky-managed modal placement for compatibility with current Gaming Mode
 - explicit Back-button and gamepad-cancel handlers for the details modal
 - status checks for Item Assistant, Grim Dawn and the bridge
+- Wine-aware process detection that survives Item Assistant renaming its main thread
 
 ## Required companion setup
 
