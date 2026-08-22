@@ -31,8 +31,7 @@ class BridgeClientTests(unittest.TestCase):
         )
         self.client = BridgeClient(
             self.paths,
-            process_checker=lambda pid, name: pid == os.getpid()
-            and name == "IAGrim.exe",
+            process_checker=lambda name: name == "IAGrim.exe",
         )
 
     def tearDown(self) -> None:
@@ -45,6 +44,18 @@ class BridgeClientTests(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertEqual(self.client.status(), (False, 99))
+
+    def test_status_does_not_treat_a_wine_pid_as_a_linux_proc_pid(self) -> None:
+        self.paths.bridge_status.write_text(
+            json.dumps({"version": BRIDGE_VERSION, "ready": True, "pid": 292}),
+            encoding="utf-8",
+        )
+        client = BridgeClient(
+            self.paths,
+            process_checker=lambda *args: args == ("IAGrim.exe",),
+        )
+
+        self.assertEqual(client.status(), (True, BRIDGE_VERSION))
 
     def test_transfer_uses_private_atomic_request_and_valid_response(self) -> None:
         captured: dict = {}

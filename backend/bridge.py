@@ -9,7 +9,7 @@ from typing import Callable
 
 from .models import OperationResult
 from .paths import GdiaPaths
-from .processes import pid_matches
+from .processes import any_process_named
 
 
 BRIDGE_VERSION = 1
@@ -21,10 +21,10 @@ class BridgeClient:
     def __init__(
         self,
         paths: GdiaPaths,
-        process_checker: Callable[[int, str], bool] | None = None,
+        process_checker: Callable[[str], bool] | None = None,
     ):
         self.paths = paths
-        self._process_checker = process_checker or pid_matches
+        self._process_checker = process_checker or any_process_named
 
     def status(self) -> tuple[bool, int | None]:
         try:
@@ -33,12 +33,11 @@ class BridgeClient:
                 return False, None
             status = json.loads(raw)
             version = int(status.get("version", 0))
-            pid = int(status.get("pid", 0))
             ready = status.get("ready") is True
             if (
                 version != BRIDGE_VERSION
                 or not ready
-                or not self._process_checker(pid, "IAGrim.exe")
+                or not self._process_checker("IAGrim.exe")
             ):
                 return False, version or None
             return True, version

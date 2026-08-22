@@ -1,12 +1,13 @@
 {
   "name": "decky-grim-dawn-item-assistant",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Search and transfer Grim Dawn Item Assistant items from Decky Loader.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
+    "test:ui": "vitest run",
     "test": "python3 -m unittest discover -v",
     "package": "bash scripts/package-release.sh"
   },
@@ -31,11 +32,16 @@
     "@decky/rollup": "^1.0.2",
     "@decky/ui": "^4.11.0",
     "@rollup/rollup-linux-x64-musl": "^4.53.3",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "19.1.1",
     "@types/react-dom": "19.1.1",
     "@types/react-router": "5.1.20",
+    "jsdom": "^30.0.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "rollup": "^4.53.3",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",

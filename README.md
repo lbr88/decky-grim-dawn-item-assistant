@@ -6,7 +6,7 @@ windows.
 
 ## Current status
 
-Version 0.3.1 is a public alpha. The complete transfer path is built and tested
+Version 0.3.2 is a public alpha. The complete transfer path is built and tested
 against Item Assistant `1.5.9700.13021`, source commit
 `b6f4e6f0fbb8f9b43d92af2f1380ef2a6f8eb1cb`.
 
@@ -28,6 +28,7 @@ The plugin provides:
 - skill, mastery, and granted-item-skill bonuses shown in rows and item details
 - direct transfer from the item details modal
 - Decky-managed modal placement for compatibility with current Gaming Mode
+- explicit Back-button and gamepad-cancel handlers for the details modal
 - status checks for Item Assistant, Grim Dawn and the bridge
 
 ## Required companion setup
@@ -77,9 +78,10 @@ API-compatible.
 6. Choose **Send to game**, or press **B** to return to the same results.
 7. Open the transfer stash in Grim Dawn to collect the item.
 
-Transfers remain disabled unless Item Assistant, Grim Dawn and bridge version 1
-are all detected. A timed-out request is reported as uncertain; refresh the
-list before trying the same item again.
+**Send to game** remains available even when the last status check was not
+ready; the backend rechecks the live bridge when pressed and reports the exact
+result. A timed-out request is reported as uncertain; refresh the list before
+trying the same item again.
 
 ## How it works
 
@@ -120,6 +122,7 @@ plugin never writes the database or stash and never reads a cloud token.
 ```bash
 corepack pnpm@9.15.9 install --frozen-lockfile
 corepack pnpm@9.15.9 run typecheck
+corepack pnpm@9.15.9 run test:ui
 corepack pnpm@9.15.9 run build
 python3 -m unittest discover -v
 bash scripts/package-release.sh
