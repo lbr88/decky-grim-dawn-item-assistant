@@ -279,12 +279,21 @@ const ItemSummary = ({ item, character }: { item: InventoryItem; character: Char
 
 type ItemDetailsModalProps = {
   item: InventoryItem;
-  canTransfer: boolean;
+  transferReady: boolean;
+  transferStatusMessage: string;
   character: CharacterSummary | null;
   onTransfer: (item: InventoryItem) => Promise<void>;
+  onClose: () => void;
 };
 
-function ItemDetailsModal({ item, canTransfer, character, onTransfer }: ItemDetailsModalProps) {
+function ItemDetailsModal({
+  item,
+  transferReady,
+  transferStatusMessage,
+  character,
+  onTransfer,
+  onClose,
+}: ItemDetailsModalProps) {
   const [details, setDetails] = useState<ItemDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -347,17 +356,18 @@ function ItemDetailsModal({ item, canTransfer, character, onTransfer }: ItemDeta
           {details && details.stats.length === 0 ? (
             <div>No computed stats were stored for this item.</div>
           ) : null}
-          {!canTransfer ? (
+          {!transferReady ? (
             <div style={{ opacity: 0.72, marginTop: 12 }}>
-              Start Grim Dawn with the combined launcher before transferring.
+              Last status check: {transferStatusMessage}. Send remains available and will recheck the bridge now.
             </div>
           ) : null}
         </div>
       }
       strOKButtonText="Send to game"
       strCancelButtonText="Back"
-      bOKDisabled={!canTransfer}
       onOK={() => void onTransfer(item)}
+      onCancel={onClose}
+      onEscKeypress={onClose}
     />
   );
 }
@@ -522,12 +532,16 @@ function Content() {
   };
 
   const showItemDetails = (item: InventoryItem) => {
-    showModal(
+    let modalHandle: ReturnType<typeof showModal> | undefined;
+    const closeModal = () => modalHandle?.Close();
+    modalHandle = showModal(
       <ItemDetailsModal
         item={item}
-        canTransfer={canTransfer}
+        transferReady={canTransfer}
+        transferStatusMessage={status?.message ?? "Checking Item Assistant"}
         character={selectedCharacter}
         onTransfer={sendItem}
+        onClose={closeModal}
       />,
     );
   };

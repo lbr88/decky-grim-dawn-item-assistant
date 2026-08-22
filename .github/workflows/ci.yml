@@ -21,6 +21,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
+      - run: pnpm run test:ui
       - run: pnpm run build
       - run: python3 -m unittest discover -v
       - run: bash scripts/package-release.sh

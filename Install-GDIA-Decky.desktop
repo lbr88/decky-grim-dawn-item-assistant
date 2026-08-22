@@ -5,4 +5,4 @@ Comment=Download, verify, and install the Decky plugin and Item Assistant bridge
 Icon=steamdeck-gaming-return
 Terminal=false
 Categories=Utility;
-Exec=konsole --hold -e bash -c "rm -f -- /tmp/install-gdia-decky-v0.3.1.sh; curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 -o /tmp/install-gdia-decky-v0.3.1.sh https://raw.githubusercontent.com/lbr88/decky-grim-dawn-item-assistant/v0.3.1/scripts/install.sh && bash /tmp/install-gdia-decky-v0.3.1.sh; rm -f -- /tmp/install-gdia-decky-v0.3.1.sh"
+Exec=konsole --hold -e bash -c "rm -f -- /tmp/install-gdia-decky-v0.3.2.sh; curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 -o /tmp/install-gdia-decky-v0.3.2.sh https://raw.githubusercontent.com/lbr88/decky-grim-dawn-item-assistant/v0.3.2/scripts/install.sh && bash /tmp/install-gdia-decky-v0.3.2.sh; rm -f -- /tmp/install-gdia-decky-v0.3.2.sh"
