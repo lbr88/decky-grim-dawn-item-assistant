@@ -39,6 +39,11 @@ class BridgeClientTests(unittest.TestCase):
 
     def test_status_requires_matching_version_ready_flag_and_process(self) -> None:
         self.assertEqual(self.client.status(), (True, BRIDGE_VERSION))
+        stopped_client = BridgeClient(
+            self.paths,
+            process_checker=lambda _name: False,
+        )
+        self.assertEqual(stopped_client.status(), (False, BRIDGE_VERSION))
         self.paths.bridge_status.write_text(
             json.dumps({"version": 99, "ready": True, "pid": os.getpid()}),
             encoding="utf-8",
